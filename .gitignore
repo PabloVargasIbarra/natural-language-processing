@@ -102,8 +102,12 @@ ENV/
 
 # embeddings
 week3/GoogleNews-vectors-negative300.bin.gz
+week4/GoogleNews-vectors-negative300.bin.gz
 
 # Data for assignments
 data/
 
 .idea
+
+# pickle
+*.pkl
