@@ -2,6 +2,8 @@ import nltk
 import pickle
 import re
 import numpy as np
+import csv
+csv.field_size_limit(100000000)
 
 nltk.download('stopwords')
 from nltk.corpus import stopwords
@@ -45,10 +47,17 @@ def load_embeddings(embeddings_path):
     # Hint: you have already implemented a similar routine in the 3rd assignment.
     # Note that here you also need to know the dimension of the loaded embeddings.
     # When you load the embeddings, use numpy.float32 type as dtype
-
-    ########################
-    #### YOUR CODE HERE ####
-    ########################
+    embeddings_path = 'data/tagspace.tsv'
+    embeddings = {}
+    with open(embeddings_path, newline='') as embedding_file:
+        reader = csv.reader(embedding_file, delimiter='\t')
+        for line in reader:
+            word = line[0]
+            embedding = np.array(line[1:]).astype(np.float32)
+            embeddings[word] = embedding
+        dim = len(line) - 1
+    return embeddings, dim
+    
 
     # remove this when you're done
     raise NotImplementedError(
@@ -60,17 +69,11 @@ def load_embeddings(embeddings_path):
 def question_to_vec(question, embeddings, dim):
     """Transforms a string to an embedding by averaging word embeddings."""
     
-    # Hint: you have already implemented exactly this function in the 3rd assignment.
-
-    ########################
-    #### YOUR CODE HERE ####
-    ########################
-
-    # remove this when you're done
-    raise NotImplementedError(
-        "Open utils.py and fill with your code. In case of Google Colab, download"
-        "(https://github.com/hse-aml/natural-language-processing/blob/master/project/utils.py), "
-        "edit locally and upload using '> arrow on the left edge' -> Files -> UPLOAD")
+    array = np.array([embeddings[word] for word in question.split(" ") if word in embeddings])
+    if len(array) == 0:
+        return np.zeros(dim)
+    else:
+        return array.mean(axis=0)
 
 
 def unpickle_file(filename):
