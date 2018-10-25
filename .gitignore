@@ -106,7 +106,7 @@ week4/GoogleNews-vectors-negative300.bin.gz
 
 # Data for assignments
 data/
-
+db.sqlite3
 .idea
 
 # pickle
