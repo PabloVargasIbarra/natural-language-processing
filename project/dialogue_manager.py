@@ -1,6 +1,6 @@
 import os
-from sklearn.metrics.pairwise import pairwise_distances_argmin
-
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics import pairwise_distances_argmin
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
 from utils import *
@@ -22,16 +22,18 @@ class ThreadRanker(object):
         """
         thread_ids, thread_embeddings = self.__load_embeddings_by_tag(tag_name)
         
-        question_vec = question_to_vec(question, thread_embeddings)
-        best_thread = pairwise_distances_argmin(question_vec, thread_embeddings)
-        
-        return thread_ids[best_thread]
+        question_vec = question_to_vec(question, self.word_embeddings, 100).astype('float32').reshape(1, 100)
+        #best_thread = cosine_similarity(thread_embeddings, question_vec).argmin() # Memory Error
+        best_thread = np.array([cosine_similarity(emb.reshape(1, 100), 
+                                                  question_vec) for emb in thread_embeddings]).argmin()
+        #best_thread = pairwise_distances_argmin(thread_embeddings, question_vec, metric='cosine', axis=0)[0]
+        return thread_ids.values[best_thread]
 
 
 class DialogueManager(object):
     def __init__(self, paths):
         print("Loading resources...")
-
+        
         # Intent recognition:
         self.intent_recognizer = unpickle_file(paths['INTENT_RECOGNIZER'])
         self.tfidf_vectorizer = unpickle_file(paths['TFIDF_VECTORIZER'])
@@ -51,9 +53,9 @@ class DialogueManager(object):
         # and then calling *train* function with "chatterbot.corpus.english" param
         chatbot = ChatBot("pablo_bot")
         # Create a new trainer for the chatbot
-        trainer = ChatterBotCorpusTrainer(chatbot)
+        chatbot.set_trainer(ChatterBotCorpusTrainer)
         # Train based on the english conversations corpus
-        trainer.train("chatterbot.corpus.english.conversations")
+        chatbot.train("chatterbot.corpus.english.conversations")
         self.chitchat_bot = chatbot
        
     def generate_answer(self, question):
@@ -63,22 +65,22 @@ class DialogueManager(object):
         # Don't forget to prepare question and calculate features for the question.
         
         prepared_question = text_prepare(question)
-        features = tfidf_vectorizer.transform(prepared_question)
-        intent = self.intent_recognizer(features)
-
+        features = self.tfidf_vectorizer.transform([prepared_question])
+        intent = self.intent_recognizer.predict(features)[0]
+        
         # Chit-chat part:   
         if intent == 'dialogue':
             # Pass question to chitchat_bot to generate a response.       
-            response = self.chitchat_bot(question)
+            response = self.chitchat_bot.get_response(question).text
             return response
         
         # Goal-oriented part:
         else:        
             # Pass features to tag_classifier to get predictions.
-            tag = self.tag_classifier(features)
+            tag = self.tag_classifier.predict(features)[0]
             
             # Pass prepared_question to thread_ranker to get predictions.
-            thread_id = get_best_thread(question, tag)
+            thread_id = self.thread_ranker.get_best_thread(question, tag)
            
             return self.ANSWER_TEMPLATE % (tag, thread_id)
 

@@ -108,6 +108,6 @@ week4/GoogleNews-vectors-negative300.bin.gz
 data/
 db.sqlite3
 .idea
-
+test.ipynb
 # pickle
 *.pkl

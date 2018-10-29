@@ -14,7 +14,7 @@ RESOURCE_PATH = {
     'TAG_CLASSIFIER': 'tag_classifier.pkl',
     'TFIDF_VECTORIZER': 'tfidf_vectorizer.pkl',
     'THREAD_EMBEDDINGS_FOLDER': 'thread_embeddings_by_tags',
-    'WORD_EMBEDDINGS': 'word_embeddings.tsv',
+    'WORD_EMBEDDINGS': 'data/vocabulary_embeddings.npy',
 }
 
 
@@ -47,15 +47,19 @@ def load_embeddings(embeddings_path):
     # Hint: you have already implemented a similar routine in the 3rd assignment.
     # Note that here you also need to know the dimension of the loaded embeddings.
     # When you load the embeddings, use numpy.float32 type as dtype
-    embeddings_path = 'data/tagspace.tsv'
     embeddings = {}
-    with open(embeddings_path, newline='') as embedding_file:
-        reader = csv.reader(embedding_file, delimiter='\t')
-        for line in reader:
-            word = line[0]
-            embedding = np.array(line[1:]).astype(np.float32)
-            embeddings[word] = embedding
-        dim = len(line) - 1
+    if embeddings_path[-3:]=='npy':
+        embeddings = np.load(embeddings_path).item()
+        dim = len(embeddings['to'])
+    
+    else:
+        with open(embeddings_path, newline='') as embedding_file:
+            reader = csv.reader(embedding_file, delimiter='\t')
+            for line in reader:
+                word = line[0]
+                embedding = np.array(line[1:]).astype(np.float32)
+                embeddings[word] = embedding
+            dim = len(line) - 1
     return embeddings, dim
     
 

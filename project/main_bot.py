@@ -5,8 +5,9 @@ import time
 import argparse
 import os
 import json
-
+from utils import *
 from requests.compat import urljoin
+from dialogue_manager import DialogueManager
 
 
 class BotHandler(object):
@@ -64,8 +65,8 @@ class SimpleDialogueManager(object):
     
     def generate_answer(self, question): 
         return "Hello, world!" 
-        
-
+             
+    
 def main():
     args = parse_args()
     token = args.token
@@ -84,7 +85,9 @@ def main():
     # This is the point where you plug it into the Telegram bot. 
     # Do not forget to import all needed dependencies when you do so.
     
-    simple_manager = SimpleDialogueManager()
+    # simple_manager = SimpleDialogueManager()
+    simple_manager = DialogueManager(RESOURCE_PATH)
+    simple_manager.create_chitchat_bot()
     bot = BotHandler(token, simple_manager)
     
     ###############################################################
