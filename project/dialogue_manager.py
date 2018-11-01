@@ -23,7 +23,7 @@ class ThreadRanker(object):
         
         question_vec = question_to_vec(question, self.word_embeddings, 100).astype('float32').reshape(1, 100)
         best_thread = pairwise_distances_argmin(question_vec.reshape(1, self.embeddings_dim),thread_embeddings)
-        return thread_ids[best_thread]
+        return thread_ids[best_thread][0]
 
 
 class DialogueManager(object):
