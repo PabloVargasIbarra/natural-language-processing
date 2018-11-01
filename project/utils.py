@@ -48,18 +48,13 @@ def load_embeddings(embeddings_path):
     # Note that here you also need to know the dimension of the loaded embeddings.
     # When you load the embeddings, use numpy.float32 type as dtype
     embeddings = {}
-    if embeddings_path[-3:]=='npy':
-        embeddings = np.load(embeddings_path).item()
-        dim = len(embeddings['to'])
-    
-    else:
-        with open(embeddings_path, newline='') as embedding_file:
-            reader = csv.reader(embedding_file, delimiter='\t')
-            for line in reader:
-                word = line[0]
-                embedding = np.array(line[1:]).astype(np.float32)
-                embeddings[word] = embedding
-            dim = len(line) - 1
+    with open(embeddings_path, newline='') as embedding_file:
+        reader = csv.reader(embedding_file, delimiter='\t')
+        for line in reader:
+            word = line[0]
+            embedding = np.array(line[1:]).astype(np.float32)
+            embeddings[word] = embedding
+        dim = len(line) - 1
     return embeddings, dim
     
 

@@ -85,7 +85,7 @@ class DialogueManager(object):
         # Chit-chat part:   
         if intent == 'dialogue':
             # Pass question to chitchat_bot to generate a response.       
-            response = self.chitchat_bot.get_response(question).text
+            response = self.chatbot.get_response(question).text
             return response
         
         # Goal-oriented part:
