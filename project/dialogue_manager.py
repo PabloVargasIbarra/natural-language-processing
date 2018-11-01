@@ -1,5 +1,4 @@
 import os
-from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import pairwise_distances_argmin
 from chatterbot import ChatBot
 from chatterbot.trainers import ChatterBotCorpusTrainer
@@ -23,11 +22,8 @@ class ThreadRanker(object):
         thread_ids, thread_embeddings = self.__load_embeddings_by_tag(tag_name)
         
         question_vec = question_to_vec(question, self.word_embeddings, 100).astype('float32').reshape(1, 100)
-        #best_thread = cosine_similarity(thread_embeddings, question_vec).argmin() # Memory Error
-        best_thread = np.array([cosine_similarity(emb.reshape(1, 100), 
-                                                  question_vec) for emb in thread_embeddings]).argmin()
-        #best_thread = pairwise_distances_argmin(thread_embeddings, question_vec, metric='cosine', axis=0)[0]
-        return thread_ids.values[best_thread]
+        best_thread = pairwise_distances_argmin(question_vec.reshape(1, self.embeddings_dim),thread_embeddings)
+        return thread_ids[best_thread]
 
 
 class DialogueManager(object):
@@ -43,7 +39,9 @@ class DialogueManager(object):
         # Goal-oriented part:
         self.tag_classifier = unpickle_file(paths['TAG_CLASSIFIER'])
         self.thread_ranker = ThreadRanker(paths)
-
+        # Chit-chat bot
+        self.create_chitchat_bot()
+        
     def create_chitchat_bot(self):
         """Initializes self.chitchat_bot with some conversational model."""
 
@@ -51,12 +49,28 @@ class DialogueManager(object):
         # It could be done by creating ChatBot with the *trainer* parameter equals 
         # "chatterbot.trainers.ChatterBotCorpusTrainer"
         # and then calling *train* function with "chatterbot.corpus.english" param
-        chatbot = ChatBot("pablo_bot")
-        # Create a new trainer for the chatbot
-        chatbot.set_trainer(ChatterBotCorpusTrainer)
-        # Train based on the english conversations corpus
-        chatbot.train("chatterbot.corpus.english.conversations")
-        self.chitchat_bot = chatbot
+        self.chatbot = ChatBot(
+            'pablo_bot',
+            trainer = 'chatterbot.trainers.ChatterBotCorpusTrainer'
+            )
+        self.chatbot.train("chatterbot.corpus.english")
+        self.chatbot.set_trainer(ListTrainer)
+        self.chatbot.train([
+            "Hey",
+            "Hey! How are you?",
+        ])
+        self.chatbot.train([
+            "How are you doing?",
+            "I am good.",
+        ])
+        self.chatbot.train([
+            "What's your hobby?",
+            "I love reading books.",
+        ])
+        self.chatbot.train([
+            "What is AI?",
+            "An intelligent machine that can learn things!",
+        ])
        
     def generate_answer(self, question):
         """Combines stackoverflow and chitchat parts using intent recognition."""
